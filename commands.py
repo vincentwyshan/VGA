@@ -1,6 +1,7 @@
 #coding=utf8
 
 from sina import SinaWeibo
+from weather import Weather
 
 from optparse import *
 
@@ -21,8 +22,16 @@ weather.add_option('-f', help='''turn off''', dest='turnoff')
 qq = OptionParser(usage='qq options')
 qq.add_option('-i', help='''initialize tencent weibo...''', dest='init')
 
+gmail = OptionParser(usage='gmail options')
+gmail.add_option('-i', help="initialize gmail...", dest='init')
+
+toall = OptionParser(usage='toall options')
+toall.add_option('-n', help="new message to all microblog", dest='newmessage')
+
 CMDS = {
         'sina':(sina, SinaWeibo),
-        'weather':weather,
+        'weather':(weather, Weather),
         'qq':qq,
+        'gmail':gmail,
+        'toall':toall,
        }

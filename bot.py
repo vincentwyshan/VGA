@@ -11,28 +11,26 @@ def messageCB(conn,mess):
     text=mess.getBody()
     print 'Got Message:', text
     user=mess.getFrom()
-    reply = StringIO.StringIO()
     message = mess.getBody()
     email = '%s@%s' % (user.node, user.domain)
     cmd = message.split('||', 1)[0]
-    message = message.replace(cmd, '', 1)
+    message = message.replace(cmd, '', 1).strip().strip('||').strip()
     app = cmd.split(' ')[0]
+    result = None
     if not hasattr(commands, app):
+        reply = StringIO.StringIO()
         for name,parser in commands.CMDS.items():
             print >>reply, '%s -h' % name
+        result = reply.getvalue()
     else:
         appparser, apprunner = commands.CMDS[app]
-        bakup = sys.stdout
-        sys.stdout = reply
         try:
-            cmd += ' '
+            cmd += ' ' # send blank cmd
             appopt, apparg = appparser.parse_args(cmd.encode('utf8').split(' '))
-            apprunner(email)(appopt, apparg, message)
+            result = apprunner(email)(appopt, apparg, message)
         except SystemExit:
-            pass
-        finally:
-            sys.stdout = bakup
-    if reply: conn.send(xmpp.Message(mess.getFrom(),reply.getvalue()))
+            result = appparser.format_help()
+    conn.send(xmpp.Message(mess.getFrom(), result or 'None'))
 
 def presenceCB(conn, msg):
     print unicode(msg)
@@ -45,7 +43,7 @@ def presenceCB(conn, msg):
 
 def StepOn(conn):
     try:
-        conn.Process(1)
+        conn.Process(1) # block 1 second
     except KeyboardInterrupt: return 0
     return 1
 
@@ -65,6 +63,7 @@ else:
         sys.exit(1)
     if conres<>'tls':
         print "Warning: unable to estabilish secure connection - TLS failed!"
+    print user, password
     authres=conn.auth(user,password)
     if not authres:
         print "Unable to authorize on %s - check login/password."%server

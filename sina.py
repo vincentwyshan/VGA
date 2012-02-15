@@ -3,10 +3,20 @@
 from weibopy.auth import OAuthHandler
 from weibopy.api import API
 
-import user
+import ConfigParser
 
-APP_KEY = '2622175870' 
-APP_SECRET = 'da083eeca1f6aef7bc2381f20a9b2a3b'
+import user
+import basis
+
+log = basis.getlogger(__name__)
+
+cfg = ConfigParser.ConfigParser()
+cfg.read('config.ini')
+
+APP_KEY = cfg.get('sina', 'APP_KEY')
+APP_SECRET = cfg.get('sina', 'APP_SECRET')
+
+del cfg
 
 def authorization_url(callback_url=''):
     auth = OAuthHandler( APP_KEY, APP_SECRET, callback_url);
@@ -22,10 +32,10 @@ class SinaWeibo(object):
         user.add(email)
 
     def init(self, verifier_num=None):
-        print 'init', verifier_num
-        info = user.get(self.email)
-        print info.get('request_token')
-        if not info.get('request_token'):
+        log.debug('init %s' % verifier_num)
+        info = user.get_app('sina', self.email)
+        log.debug(info.get('request_token'))
+        if not info.get('request_token') or not verifier_num:
             return self.init_1st_step()
         else:
             return self.init_2nd_step(verifier_num)
@@ -35,6 +45,7 @@ class SinaWeibo(object):
         auth_url = auth.get_authorization_url()
         user.update_app('sina', self.email, request_token=auth.request_token.key,
                 request_secret=auth.request_token.secret)
+        log.debug(repr(user.get(self.email)))
         return auth_url
 
     def init_2nd_step(self, verifier_num):
@@ -45,17 +56,20 @@ class SinaWeibo(object):
         user.update_app('sina', self.email, access_token=access.key, access_secret=access.secret)
         return True
 
-    def newmessage(self, message):
-        auth = OAuthHandler(oauth.APP_KEY, oauth.APP_SECRET)
-        auth.setToken(session.atKey[web.ctx.ip], session.atSec[web.ctx.ip])
+    def newmessage(self, message, lat=None, long=None):
+        log.debug('new message: %s' % message)
+        auth = OAuthHandler(APP_KEY, APP_SECRET)
+        info = user.get_app('sina', self.email)
+        auth.setToken(info['access_token'], info['access_secret'])
         api = API(auth)
         api.update_status(message)
+        log.debug('new message done.')
         return True
 
     def __call__(self, opt, args, message):
-        if hasattr(opt, 'init'):
+        if hasattr(opt, 'init') and opt.init != None:
             response = self.init(opt.init)
-            if type(response) in (str, unicode):
-                print response
-            else:
-                print ''
+            return str(response)
+        elif hasattr(opt, 'newmessage') and opt.newmessage != None:
+            response = self.newmessage(message)
+            return str(response)

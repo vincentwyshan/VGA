@@ -21,6 +21,9 @@ try:
 except:
     pass
 
+import basis
+log = basis.getlogger(__name__)
+
 def add(email, name=None):
     '''
     >>> id = add('vincent.wyshan@gmail.com', 'Vincent')
@@ -78,6 +81,13 @@ def _exists(app, email):
     return
 
 def update_app(app, email, **kwarg):
+    '''
+    >>> update_app('sina', 'vincent.wyshan@gmail.com', request_token='test-token')
+    >>> info = get_app('sina', 'vincent.wyshan@gmail.com')
+    >>> print info.get('request_token')
+    test-token
+    '''
+    log.debug('check...')
     _exists(app, email)
     sql = "update %s set " % app.lower()
     paras = []
@@ -87,7 +97,9 @@ def update_app(app, email, **kwarg):
         values.append(v)
     sql += ','.join(paras)
     sql += ' where email=?'
+    log.debug(sql)
     values.append(email)
+    log.debug(values)
     db.execute(sql, tuple(values))
     db.commit()
 
