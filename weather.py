@@ -1,6 +1,6 @@
 #coding=utf8
 '''
-reference: yahoo weather 
+reference: google weather API
 '''
 
 import user
@@ -81,9 +81,6 @@ class Weather(object):
 
     @classmethod
     def sendall(cls, conn):
-        now = datetime.datetime.now()
-        if now.hour != 8:
-            return
         cursor = user.db.cursor()
         cursor.execute("select email from weather")
         import xmpp
