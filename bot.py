@@ -4,8 +4,12 @@
 import sys
 import StringIO
 import xmpp
+import datetime
 
 import commands
+
+import basis
+log = basis.getlogger(__name__)
 
 def messageCB(conn,mess):
     text=mess.getBody()
@@ -45,6 +49,11 @@ def StepOn(conn):
     try:
         conn.Process(1) # block 1 second
     except KeyboardInterrupt: return 0
+    now = datetime.datetime.now()
+    if now.hour == 8:
+        log.debug("send weather...")
+        from weather import Weather
+        Weather.sendall(conn)
     return 1
 
 def GoOn(conn):

@@ -17,7 +17,7 @@ except:
     pass
 
 try:
-    db.execute(""" create table weather (email) """)
+    db.execute(""" create table weather (email, recently_send date, city) """)
 except:
     pass
 
@@ -130,3 +130,9 @@ def get_app(app, email):
     for i in range(len(cursor.description)):
         result[cursor.description[i][0]] = data[i]
     return result
+
+def delete_app(app, email):
+    sql = "delete from %s where email = ?" % app.lower()
+    db.execute(sql, (email,))
+    db.commit()
+    return True
