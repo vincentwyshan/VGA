@@ -27,7 +27,12 @@ def messageCB(conn,mess):
             print >>reply, '%s -h' % name
         result = reply.getvalue()
     else:
-        appparser, apprunner = commands.CMDS[app]
+        try:
+            appparser, apprunner = commands.CMDS[app]
+        except:
+            import traceback
+            conn.send(xmpp.Message(mess.getFrom(), traceback.format_exc()))
+            return
         try:
             cmd += ' ' # send blank cmd
             appopt, apparg = appparser.parse_args(cmd.encode('utf8').split(' '))
